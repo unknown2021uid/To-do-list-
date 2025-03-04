@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌸 Cute Anime To-Do List</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Quicksand:wght@400;600&display=swap');
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            text-align: center;
+            background: url('https://i.imgur.com/2mVFtQk.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: #fff;
+            transition: background 0.5s ease-in-out;
+        }
+
+        .container {
+            width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+            background: rgba(173, 216, 230, 0.9);
+            border-radius: 15px;
+            box-shadow: 0px 0px 20px rgba(135, 206, 250, 0.7);
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        h1 {
+            font-family: 'Fredoka One', cursive;
+            font-size: 22px;
+            color: #00bfff;
+        }
+
+        #clock {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffeb3b;
+            margin-bottom: 10px;
+        }
+
+        .input-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        input, button {
+            padding: 8px;
+            border: none;
+            border-radius: 10px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        button {
+            cursor: pointer;
+            background: #00bfff;
+            color: white;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #009acd;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #00bfff;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 4px 6px rgba(135, 206, 250, 0.3);
+            transition: 0.3s;
+        }
+
+        li:hover {
+            background: rgba(255, 255, 255, 1);
+        }
+
+        .completed {
+            text-decoration: line-through;
+            color: gray;
+        }
+
+        .delete-btn {
+            background: #ff3333;
+            font-size: 12px;
+        }
+
+        .delete-btn:hover {
+            background: #cc0000;
+        }
+
+        /* Style for Upload Background Button */
+        #bgUploadLabel {
+            display: inline-block;
+            background: #ff69b4;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: 0.3s;
+        }
+
+        #bgUploadLabel:hover {
+            background: #ff1493;
+        }
+
+        #bgUpload {
+            display: none;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌸 Cute Anime To-Do List</h1>
+        <div id="clock">🕒 Loading...</div>
+
+        <!-- Upload Background Button -->
+        <label id="bgUploadLabel" for="bgUpload">🌸 Upload Background</label>
+        <input type="file" id="bgUpload" accept="image/*" onchange="changeBackground()">
+
+        <div class="input-container">
+            <input type="text" id="taskInput" placeholder="Enter a task...">
+            <input type="date" id="taskDate">
+            <input type="time" id="taskTime">
+            <button onclick="addTask()">➕ Add Task</button>
+        </div>
+        <ul id="taskList"></ul>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            loadTasks();
+            updateClock();
+            setInterval(updateClock, 1000);
+            loadBackground();
+        });
+
+        function updateClock() {
+            const now = new Date();
+            const time = now.toLocaleTimeString();
+            document.getElementById("clock").innerText = `🕒 ${time}`;
+        }
+
+        function addTask() {
+            let taskInput = document.getElementById("taskInput");
+            let taskDate = document.getElementById("taskDate");
+            let taskTime = document.getElementById("taskTime");
+            let taskText = taskInput.value.trim();
+            let dateText = taskDate.value;
+            let timeText = taskTime.value;
+
+            if (taskText === "" || dateText === "" || timeText === "") return;
+
+            let taskList = document.getElementById("taskList");
+            let li = document.createElement("li");
+            li.innerHTML = `${taskText} <span>📅 ${dateText} ⏰ ${timeText}</span>
+                <button onclick="toggleTask(this)">✔</button> 
+                <button class="delete-btn" onclick="removeTask(this)">❌</button>`;
+
+            taskList.appendChild(li);
+            saveTasks();
+            sendNotification(taskText, dateText, timeText);
+            taskInput.value = "";
+            taskDate.value = "";
+            taskTime.value = "";
+        }
+
+        function toggleTask(button) {
+            let li = button.parentElement;
+            li.classList.toggle("completed");
+            saveTasks();
+        }
+
+        function removeTask(button) {
+            let li = button.parentElement;
+            li.remove();
+            saveTasks();
+        }
+
+        function saveTasks() {
+            let tasks = [];
+            document.querySelectorAll("#taskList li").forEach((li) => {
+                let taskText = li.childNodes[0].textContent.trim();
+                let dateTime = li.querySelector("span").textContent.replace("📅 ", "").replace("⏰ ", "").trim();
+                let completed = li.classList.contains("completed");
+                tasks.push({ text: taskText, dateTime: dateTime, completed: completed });
+            });
+            localStorage.setItem("tasks", JSON.stringify(tasks));
+        }
+
+        function loadTasks() {
+            let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+            let taskList = document.getElementById("taskList");
+
+            tasks.forEach(task => {
+                let li = document.createElement("li");
+                li.innerHTML = `${task.text} <span>📅 ${task.dateTime}</span>
+                    <button onclick="toggleTask(this)">✔</button> 
+                    <button class="delete-btn" onclick="removeTask(this)">❌</button>`;
+                if (task.completed) li.classList.add("completed");
+                taskList.appendChild(li);
+            });
+        }
+
+        function sendNotification(taskText, taskDate, taskTime) {
+            if (Notification.permission === "granted") {
+                new Notification("Reminder", { body: `📅 ${taskDate} ⏰ ${taskTime} - ${taskText}` });
+            }
+        }
+
+        function changeBackground() {
+            let file = document.getElementById("bgUpload").files[0];
+            if (file) {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    localStorage.setItem("customBg", e.target.result);
+                    document.body.style.backgroundImage = `url('${e.target.result}')`;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function loadBackground() {
+            let savedBg = localStorage.getItem("customBg");
+            if (savedBg) document.body.style.backgroundImage = `url('${savedBg}')`;
+        }
+    </script>
+</body>
+</html>
